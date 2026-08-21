@@ -37,6 +37,18 @@
         }
         .btn:hover { background-color: #004085; }
 
+        .btn-danger {
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.75em;
+        }
+        .btn-danger:hover { background-color: #c9302c; }
+
         .header-info { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; }
         h2 { color: #0056b3; margin: 0 0 5px 0; }
         .subtitle { color: #6c757d; font-size: 0.9em; }
@@ -46,7 +58,6 @@
         td { padding: 10px 12px; border-bottom: 1px solid #dee2e6; font-size: 0.85em; }
         tr:hover { background-color: #f1f5f9; }
 
-        /* Estilos idênticos aos status do PowerShell */
         .RUNNING { color: #d9534f; font-weight: bold; }
         .READY { color: #5cb85c; font-weight: bold; }
         .RESERVED { color: #f0ad4e; font-weight: bold; }
@@ -58,7 +69,6 @@
 
     <h2>PASOE - Monitoramento de Sessões ABL</h2>
     
-    <!-- Painel de Configurações com pré-preenchimento -->
     <div class="config-panel">
         <div class="form-group">
             <label>IP / Host</label>
@@ -98,11 +108,12 @@
                 <th>Programa / Procedure</th>
                 <th>IP Cliente</th>
                 <th>Tempo Decorrido (ms)</th>
+                <th>Ações</th>
             </tr>
         </thead>
         <tbody id="sessionTableBody">
             <tr>
-                <td colspan="7" class="loading">Clique em "Buscar Sessões" para carregar os dados.</td>
+                <td colspan="8" class="loading">Clique em "Buscar Sessões" para carregar os dados.</td>
             </tr>
         </tbody>
     </table>
@@ -116,7 +127,7 @@
             const pass = document.getElementById('pass').value;
 
             const tbody = document.getElementById('sessionTableBody');
-            tbody.innerHTML = '<tr><td colspan="7" class="loading">Buscando dados no PASOE...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="loading">Buscando dados no PASOE...</td></tr>';
 
             const endpoint = `http://${host}:${port}/oemanager/applications/${appName}/sessions`;
             const encodedCredentials = btoa(`${user}:${pass}`);
@@ -136,21 +147,22 @@
                 const data = await response.json();
                 const sessions = data.result.OEABLSession || [];
 
-                // Atualiza contadores do cabeçalho
                 document.getElementById('summaryText').innerText = `Aplicação: ${appName} | Total de Sessões: ${sessions.length}`;
                 document.getElementById('lastUpdate').innerText = `Última atualização: ${new Date().toLocaleTimeString('pt-BR')}`;
 
                 tbody.innerHTML = '';
 
                 if (sessions.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" class="loading">Nenhuma sessão encontrada.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8" class="loading">Nenhuma sessão encontrada.</td></tr>';
                     return;
                 }
 
-                // Popula as linhas da tabela mantendo o mesmo mapa do Select-Object do PowerShell
                 sessions.forEach(session => {
                     const clientInfo = session.clientConnInfo || {};
                     const tr = document.createElement('tr');
+
+                    // Passa o sessionID (o hash completo) para a função de término
+                    const fullSessionID = session.sessionID;
 
                     tr.innerHTML = `
                         <td><strong>${session.ablSessionID || ''}</strong></td>
@@ -160,16 +172,52 @@
                         <td>${clientInfo.requestProcedure || ''}</td>
                         <td>${clientInfo.clientName || ''}</td>
                         <td>${clientInfo.elapsedTimeMs !== undefined ? clientInfo.elapsedTimeMs : ''}</td>
+                        <td>
+                            <button class="btn-danger" onclick="terminateSession('${fullSessionID}', '${session.ablSessionID}')">❌ Encerrar</button>
+                        </td>
                     `;
                     tbody.appendChild(tr);
                 });
 
             } catch (error) {
-                tbody.innerHTML = `<tr><td colspan="7" class="loading" style="color: #d9534f;">${error.message}<br><small>Verifique se liberou o CORS no Tomcat do PASOE para acessar via navegador.</small></td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="loading" style="color: #d9534f;">${error.message}<br><small>Verifique se liberou o CORS no Tomcat do PASOE para acessar via navegador.</small></td></tr>`;
             }
         }
 
-        // Executa busca inicial ao carregar a página
+        async function terminateSession(sessionID, ablSessionID) {
+            const host = document.getElementById('host').value;
+            const port = document.getElementById('port').value;
+            const appName = document.getElementById('appName').value;
+            const user = document.getElementById('user').value;
+            const pass = document.getElementById('pass').value;
+
+            if (!confirm(`Deseja realmente encerrar a sessão ABL ${ablSessionID}?`)) {
+                return;
+            }
+
+            const endpoint = `http://${host}:${port}/oemanager/applications/${appName}/sessions?sessionID=${encodeURIComponent(sessionID)}&terminateOpt=1`;
+            const encodedCredentials = btoa(`${user}:${pass}`);
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Basic ${encodedCredentials}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro ao encerrar: ${response.status} ${response.statusText}`);
+                }
+
+                alert(`Sessão ${ablSessionID} encerrada com sucesso!`);
+                loadSessions(); // Recarrega a lista automaticamente
+
+            } catch (error) {
+                alert(`Falha ao encerrar a sessão: ${error.message}`);
+            }
+        }
+
         window.onload = loadSessions;
     </script>
 </body>
