@@ -1,6 +1,7 @@
 [
   {
     "name": "RPW-VGS-LNX",
+	"type": "produção",
     "host": "10.0.3.2",
     "port": "9380",
     "appName": "rpw_vgs_lnx_p",
@@ -9,6 +10,7 @@
   },
   {
     "name": "INT2-LNX",
+	"type": "produção",
     "host": "10.0.3.2",
     "port": "7480",
     "appName": "int2_cjduv5_p",
@@ -17,6 +19,7 @@
   },
   {
     "name": "INT1-LNX",
+	"type": "produção",
     "host": "10.0.3.2",
     "port": "9180",
     "appName": "int1_cjduv5_p",
