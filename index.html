@@ -36,7 +36,7 @@
 
         .form-group { display: flex; flex-direction: column; }
         .form-group label { font-size: 0.8em; font-weight: bold; color: #495057; margin-bottom: 4px; }
-        .form-group input { padding: 6px 10px; border: 1px solid #ced4da; border-radius: 4px; font-size: 0.85em; }
+        .form-group input, .form-group select { padding: 6px 10px; border: 1px solid #ced4da; border-radius: 4px; font-size: 0.85em; background-color: #fff; }
 
         .btn {
             background-color: #0056b3;
@@ -91,7 +91,7 @@
         .AVAILABLE { color: #0275d8; font-weight: bold; }
         .loading { text-align: center; color: #6c757d; font-style: italic; padding: 20px !important; }
 
-        /* Estilos do Modal e Spinner de Carregamento */
+        /* Estilos do Modal e Spinner */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -132,7 +132,6 @@
             flex-grow: 1;
         }
 
-        /* Rodinha de carregamento (Spinner) */
         .spinner-container {
             display: flex;
             flex-direction: column;
@@ -176,32 +175,38 @@
     </div>
     
     <div class="config-panel">
+        <div class="form-group" style="grid-column: span 2;">
+            <label>Ambiente / Instância PASOE</label>
+            <select id="environmentSelect" onchange="onEnvironmentChange()">
+                <option value="">Carregando configurações...</option>
+            </select>
+        </div>
         <div class="form-group">
             <label>IP / Host</label>
-            <input type="text" id="host" value="10.0.3.2">
+            <input type="text" id="host">
         </div>
         <div class="form-group">
             <label>Porta</label>
-            <input type="text" id="port" value="9680">
+            <input type="text" id="port">
         </div>
         <div class="form-group">
             <label>Instância PASOE</label>
-            <input type="text" id="appName" value="oepas1">
+            <input type="text" id="appName">
         </div>
         <div class="form-group">
             <label>Usuário</label>
-            <input type="text" id="user" value="tomcat">
+            <input type="text" id="user">
         </div>
         <div class="form-group">
             <label>Senha</label>
-            <input type="password" id="pass" value="tomcat">
+            <input type="password" id="pass">
         </div>
         <button class="btn" onclick="loadSessions()">🔄 Buscar Sessões</button>
     </div>
 
     <div class="header-info">
-        <div class="subtitle" id="summaryText">Aplicação: oepas1 | Total de Sessões: 0</div>
-        <div class="subtitle" id="lastUpdate">Aguardando atualização...</div>
+        <div class="subtitle" id="summaryText">Selecione um ambiente para monitorar</div>
+        <div class="subtitle" id="lastUpdate">Aguardando ação...</div>
     </div>
 
     <table>
@@ -219,7 +224,7 @@
         </thead>
         <tbody id="sessionTableBody">
             <tr>
-                <td colspan="8" class="loading">Clique em "Buscar Sessões" para carregar os dados.</td>
+                <td colspan="8" class="loading">Selecione um ambiente e clique em "Buscar Sessões".</td>
             </tr>
         </tbody>
     </table>
@@ -231,14 +236,240 @@
                 <h3 id="modalTitle">Stack Trace da Sessão</h3>
                 <button class="close-btn" onclick="closeModal()">✕</button>
             </div>
-            <div class="modal-body" id="modalBody">
-                <!-- Conteúdo dinâmico (Spinner ou JSON formatado) -->
-            </div>
+            <div class="modal-body" id="modalBody"></div>
         </div>
     </div>
 
     <script>
- function getAuthHeader(){const a=document['getElementById']('user')['value'],b=document['getElementById']('pass')['value'];return'Basic\x20'+btoa(a+':'+b);}function getBaseUrl(){const a=document['getElementById']('host')['value'],b=document['getElementById']('port')['value'],c=document['getElementById']('appName')['value'];return'http://'+a+':'+b+'/oemanager/applications/'+c;}async function loadSessions(){const a=document['getElementById']('sessionTableBody');a['innerHTML']='<tr><td\x20colspan=\x228\x22\x20class=\x22loading\x22>Buscando\x20dados\x20no\x20PASOE...</td></tr>';const b=document['getElementById']('appName')['value'],c=getBaseUrl()+'/sessions';try{const d=await fetch(c,{'method':'GET','headers':{'Authorization':getAuthHeader()}});if(!d['ok'])throw new Error('Erro\x20na\x20requisição:\x20'+d['status']+'\x20'+d['statusText']);const e=await d['json'](),f=e['result']['OEABLSession']||[];document['getElementById']('summaryText')['innerText']='Aplicação:\x20'+b+'\x20|\x20Total\x20de\x20Sessões:\x20'+f['length'],document['getElementById']('lastUpdate')['innerText']='Última\x20atualização:\x20'+new Date()['toLocaleTimeString']('pt-BR'),a['innerHTML']='';if(f['length']===0x0){a['innerHTML']='<tr><td\x20colspan=\x228\x22\x20class=\x22loading\x22>Nenhuma\x20sessão\x20encontrada.</td></tr>';return;}f['forEach'](g=>{const h=g['clientConnInfo']||{},i=document['createElement']('tr'),j=g['sessionID'],k=g['agentID'];i['innerHTML']='\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td><strong>'+(g['ablSessionID']||'')+'</strong></td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td\x20class=\x22'+g['sessionState']+'\x22>'+(g['sessionState']||'')+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td\x20class=\x22'+g['requestState']+'\x22>'+(g['requestState']||'')+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>'+(h['executerThreadId']||'')+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>'+(h['requestProcedure']||'')+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>'+(h['clientName']||'')+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>'+(h['elapsedTimeMs']!==undefined?h['elapsedTimeMs']:'')+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<button\x20class=\x22btn-info\x22\x20onclick=\x22getTrace(\x27'+j+'\x27,\x20\x27'+k+'\x27,\x20\x27'+g['ablSessionID']+'\x27)\x22>🔍\x20Trace</button>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<button\x20class=\x22btn-danger\x22\x20onclick=\x22terminateSession(\x27'+j+'\x27,\x20\x27'+g['ablSessionID']+'\x27)\x22>❌\x20Encerrar</button>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20',a['appendChild'](i);});}catch(g){a['innerHTML']='<tr><td\x20colspan=\x228\x22\x20class=\x22loading\x22\x20style=\x22color:\x20#d9534f;\x22>'+g['message']+'<br><small>Verifique\x20se\x20liberou\x20o\x20CORS\x20no\x20Tomcat\x20do\x20PASOE\x20para\x20acessar\x20via\x20navegador.</small></td></tr>';}}async function getTrace(a,b,c){const d=document['getElementById']('traceModal'),e=document['getElementById']('modalBody');document['getElementById']('modalTitle')['innerText']='Stack\x20Trace\x20-\x20Sessão\x20ABL\x20'+c,e['innerHTML']='\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22spinner-container\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22spinner\x22></div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22color:\x20#6c757d;\x20font-size:\x200.9em;\x22>Mapeando\x20requisições\x20e\x20gerando\x20trace...</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20',d['style']['display']='flex';try{const f=await fetch(getBaseUrl()+'/agents',{'method':'GET','headers':{'Authorization':getAuthHeader()}});if(!f['ok'])throw new Error('Erro\x20ao\x20buscar\x20/agents');const g=await f['json'](),h=g['result']['agents']||[],i=h['find'](t=>t['agentId']===b)||h[0x0];if(!i||!i['pid'])throw new Error('PID\x20do\x20Agente\x20não\x20foi\x20localizado.');const j=i['pid'],k=await fetch(getBaseUrl()+'/requests',{'method':'GET','headers':{'Authorization':getAuthHeader()}});if(!k['ok'])throw new Error('Erro\x20ao\x20buscar\x20/requests');const l=await k['json'](),m=l['result']['Request']||[],n=m['find'](t=>t['sessionManager']&&t['sessionManager']['sessionId']===a);if(!n||!n['agent']||!n['agent']['sessionId'])throw new Error('Não\x20foi\x20possível\x20mapear\x20a\x20sessão\x20de\x20agente.\x20A\x20sessão\x20precisa\x20estar\x20em\x20estado\x20RUNNING\x20para\x20obter\x20a\x20stack.');const o=n['agent']['sessionId'],p=getBaseUrl()+'/agents/'+j+'/sessions/'+o+'/stacks',q=await fetch(p,{'method':'GET','headers':{'Authorization':getAuthHeader()}});if(!q['ok'])throw new Error('Erro\x20ao\x20buscar\x20Stacks:\x20'+q['status']);const r=await q['json'](),s=JSON['stringify'](r,null,0x2);e['innerHTML']='\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22margin-bottom:\x2010px;\x20display:\x20flex;\x20justify-content:\x20space-between;\x20align-items:\x20center;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<small\x20style=\x22color:\x20#6c757d;\x22>PID:\x20<strong>'+j+'</strong>\x20|\x20Agent\x20Session\x20ID:\x20<strong>'+o+'</strong></small>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<button\x20class=\x22btn-info\x22\x20onclick=\x22downloadTraceJson(\x27'+c+'\x27,\x20\x27'+j+'\x27,\x20`'+encodeURIComponent(s)+'`)\x22>💾\x20Baixar\x20.json</button>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<pre><code>'+s+'</code></pre>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20';}catch(t){e['innerHTML']='\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22color:\x20#d9534f;\x20text-align:\x20center;\x20padding:\x2020px;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<strong>⚠️\x20Falha\x20ao\x20obter\x20o\x20Trace:</strong><br><br>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20'+t['message']+'\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20';}}function downloadTraceJson(b,c,d){const e=decodeURIComponent(d),f=new Blob([e],{'type':'application/json'}),g=URL['createObjectURL'](f),h=document['createElement']('a');h['href']=g,h['download']='trace_session_'+b+'_pid_'+c+'.json',document['body']['appendChild'](h),h['click'](),document['body']['removeChild'](h),URL['revokeObjectURL'](g);}function closeModal(){document['getElementById']('traceModal')['style']['display']='none';}async function terminateSession(a,b){if(!confirm('Deseja\x20realmente\x20encerrar\x20a\x20sessão\x20ABL\x20'+b+'?'))return;const c=getBaseUrl()+'/sessions?sessionID='+encodeURIComponent(a)+'&terminateOpt=1';try{const d=await fetch(c,{'method':'DELETE','headers':{'Authorization':getAuthHeader()}});if(!d['ok'])throw new Error('Erro\x20ao\x20encerrar:\x20'+d['status']+'\x20'+d['statusText']);alert('Sessão\x20'+b+'\x20encerrada\x20com\x20sucesso!'),loadSessions();}catch(e){alert('Falha\x20ao\x20encerrar\x20a\x20sessão:\x20'+e['message']);}}
+        let environmentsData = [];
+
+        // Carrega o config.json ao abrir a página
+        async function loadConfig() {
+            try {
+                const response = await fetch('config.json');
+                if (!response.ok) throw new Error("Não foi possível carregar o arquivo config.json");
+                
+                environmentsData = await response.json();
+                const select = document.getElementById('environmentSelect');
+                select.innerHTML = '';
+
+                environmentsData.forEach((env, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = env.name;
+                    select.appendChild(option);
+                });
+
+                // Seleciona o primeiro ambiente por padrão
+                if (environmentsData.length > 0) {
+                    onEnvironmentChange();
+                }
+            } catch (error) {
+                console.error("Erro ao carregar configurações:", error);
+                document.getElementById('environmentSelect').innerHTML = '<option value="">Falha ao carregar config.json</option>';
+            }
+        }
+
+        function onEnvironmentChange() {
+            const index = document.getElementById('environmentSelect').value;
+            if (index === "" || !environmentsData[index]) return;
+
+            const selectedEnv = environmentsData[index];
+            document.getElementById('host').value = selectedEnv.host || '';
+            document.getElementById('port').value = selectedEnv.port || '';
+            document.getElementById('appName').value = selectedEnv.appName || '';
+            document.getElementById('user').value = selectedEnv.user || '';
+            document.getElementById('pass').value = selectedEnv.pass || '';
+        }
+
+        function getAuthHeader() {
+            const user = document.getElementById('user').value;
+            const pass = document.getElementById('pass').value;
+            return 'Basic ' + btoa(`${user}:${pass}`);
+        }
+
+        function getBaseUrl() {
+            const host = document.getElementById('host').value;
+            const port = document.getElementById('port').value;
+            const appName = document.getElementById('appName').value;
+            return `http://${host}:${port}/oemanager/applications/${appName}`;
+        }
+
+        async function loadSessions() {
+            const tbody = document.getElementById('sessionTableBody');
+            tbody.innerHTML = '<tr><td colspan="8" class="loading">Buscando dados no PASOE...</td></tr>';
+
+            const appName = document.getElementById('appName').value;
+            const endpoint = `${getBaseUrl()}/sessions`;
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'GET',
+                    headers: { 'Authorization': getAuthHeader() }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                const sessions = data.result.OEABLSession || [];
+
+                document.getElementById('summaryText').innerText = `Aplicação: ${appName} | Total de Sessões: ${sessions.length}`;
+                document.getElementById('lastUpdate').innerText = `Última atualização: ${new Date().toLocaleTimeString('pt-BR')}`;
+
+                tbody.innerHTML = '';
+
+                if (sessions.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="loading">Nenhuma sessão encontrada.</td></tr>';
+                    return;
+                }
+
+                sessions.forEach(session => {
+                    const clientInfo = session.clientConnInfo || {};
+                    const tr = document.createElement('tr');
+                    const fullSessionID = session.sessionID;
+                    const agentID = session.agentID;
+
+                    tr.innerHTML = `
+                        <td><strong>${session.ablSessionID || ''}</strong></td>
+                        <td class="${session.sessionState}">${session.sessionState || ''}</td>
+                        <td class="${session.requestState}">${session.requestState || ''}</td>
+                        <td>${clientInfo.executerThreadId || ''}</td>
+                        <td>${clientInfo.requestProcedure || ''}</td>
+                        <td>${clientInfo.clientName || ''}</td>
+                        <td>${clientInfo.elapsedTimeMs !== undefined ? clientInfo.elapsedTimeMs : ''}</td>
+                        <td>
+                            <button class="btn-info" onclick="getTrace('${fullSessionID}', '${agentID}', '${session.ablSessionID}')">🔍 Trace</button>
+                            <button class="btn-danger" onclick="terminateSession('${fullSessionID}', '${session.ablSessionID}')">❌ Encerrar</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="8" class="loading" style="color: #d9534f;">${error.message}<br><small>Verifique se liberou o CORS no Tomcat do PASOE para acessar via navegador.</small></td></tr>`;
+            }
+        }
+
+        async function getTrace(fullSessionID, agentID, ablSessionID) {
+            const modal = document.getElementById('traceModal');
+            const modalBody = document.getElementById('modalBody');
+            document.getElementById('modalTitle').innerText = `Stack Trace - Sessão ABL ${ablSessionID}`;
+            
+            modalBody.innerHTML = `
+                <div class="spinner-container">
+                    <div class="spinner"></div>
+                    <div style="color: #6c757d; font-size: 0.9em;">Mapeando requisições e gerando trace...</div>
+                </div>
+            `;
+            modal.style.display = 'flex';
+
+            try {
+                const agentsResponse = await fetch(`${getBaseUrl()}/agents`, {
+                    method: 'GET',
+                    headers: { 'Authorization': getAuthHeader() }
+                });
+                if (!agentsResponse.ok) throw new Error("Erro ao buscar /agents");
+                
+                const agentsData = await agentsResponse.json();
+                const agentsList = agentsData.result.agents || [];
+                
+                const targetAgent = agentsList.find(a => a.agentId === agentID) || agentsList[0];
+                if (!targetAgent || !targetAgent.pid) {
+                    throw new Error("PID do Agente não foi localizado.");
+                }
+                const pid = targetAgent.pid;
+
+                const requestsResponse = await fetch(`${getBaseUrl()}/requests`, {
+                    method: 'GET',
+                    headers: { 'Authorization': getAuthHeader() }
+                });
+                if (!requestsResponse.ok) throw new Error("Erro ao buscar /requests");
+
+                const requestsData = await requestsResponse.json();
+                const requestsList = requestsData.result.Request || [];
+
+                const matchedRequest = requestsList.find(r => r.sessionManager && r.sessionManager.sessionId === fullSessionID);
+                
+                if (!matchedRequest || !matchedRequest.agent || !matchedRequest.agent.sessionId) {
+                    throw new Error(`Não foi possível mapear a sessão de agente. A sessão precisa estar em estado RUNNING para obter a stack.`);
+                }
+                const agentSessionId = matchedRequest.agent.sessionId;
+
+                const stacksUrl = `${getBaseUrl()}/agents/${pid}/sessions/${agentSessionId}/stacks`;
+                const stacksResponse = await fetch(stacksUrl, {
+                    method: 'GET',
+                    headers: { 'Authorization': getAuthHeader() }
+                });
+
+                if (!stacksResponse.ok) throw new Error(`Erro ao buscar Stacks: ${stacksResponse.status}`);
+
+                const traceData = await stacksResponse.json();
+                const jsonFormatted = JSON.stringify(traceData, null, 2);
+
+                modalBody.innerHTML = `
+                    <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <small style="color: #6c757d;">PID: <strong>${pid}</strong> | Agent Session ID: <strong>${agentSessionId}</strong></small>
+                        <button class="btn-info" onclick="downloadTraceJson('${ablSessionID}', '${pid}', \`${encodeURIComponent(jsonFormatted)}\`)">💾 Baixar .json</button>
+                    </div>
+                    <pre><code>${jsonFormatted}</code></pre>
+                `;
+
+            } catch (error) {
+                modalBody.innerHTML = `
+                    <div style="color: #d9534f; text-align: center; padding: 20px;">
+                        <strong>⚠️ Falha ao obter o Trace:</strong><br><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function downloadTraceJson(ablSessionID, pid, encodedJson) {
+            const jsonStr = decodeURIComponent(encodedJson);
+            const blob = new Blob([jsonStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `trace_session_${ablSessionID}_pid_${pid}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function closeModal() {
+            document.getElementById('traceModal').style.display = 'none';
+        }
+
+        async function terminateSession(sessionID, ablSessionID) {
+            if (!confirm(`Deseja realmente encerrar a sessão ABL ${ablSessionID}?`)) {
+                return;
+            }
+
+            const endpoint = `${getBaseUrl()}/sessions?sessionID=${encodeURIComponent(sessionID)}&terminateOpt=1`;
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': getAuthHeader() }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro ao encerrar: ${response.status} ${response.statusText}`);
+                }
+
+                alert(`Sessão ${ablSessionID} encerrada com sucesso!`);
+                loadSessions();
+
+            } catch (error) {
+                alert(`Falha ao encerrar a sessão: ${error.message}`);
+            }
+        }
+
+        // Executa o carregamento das configurações ao abrir a página
+        window.onload = loadConfig;
     </script>
 </body>
 </html>
