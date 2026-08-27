@@ -90,6 +90,82 @@
         .RESERVED { color: #f0ad4e; font-weight: bold; }
         .AVAILABLE { color: #0275d8; font-weight: bold; }
         .loading { text-align: center; color: #6c757d; font-style: italic; padding: 20px !important; }
+
+        /* Estilos do Modal e Spinner de Carregamento */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-container {
+            background: #ffffff;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 900px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 15px 20px;
+            background-color: #0056b3;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 { margin: 0; font-size: 1.1em; }
+        .close-btn { background: none; border: none; color: white; font-size: 1.2em; cursor: pointer; font-weight: bold; }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        /* Rodinha de carregamento (Spinner) */
+        .spinner-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #0056b3;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        pre {
+            background: #272822;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.85em;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 500px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
@@ -148,8 +224,21 @@
         </tbody>
     </table>
 
+    <!-- Modal para Exibição do Trace -->
+    <div id="traceModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modalTitle">Stack Trace da Sessão</h3>
+                <button class="close-btn" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Conteúdo dinâmico (Spinner ou JSON formatado) -->
+            </div>
+        </div>
+    </div>
+
     <script>
-function _0x19ad(){const _0x152ac1=['<tr><td\x20colspan=\x228\x22\x20class=\x22loading\x22\x20style=\x22color:\x20#d9534f;\x22>','statusText','</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td\x20class=\x22','toLocaleTimeString','length','removeChild','json','status','find','/stacks','pt-BR','</strong></td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td\x20class=\x22','agents','http://','DELETE','Sessão\x20','lastUpdate','stringify','Erro\x20na\x20requisição:\x20','forEach','body','agent','Erro\x20ao\x20buscar\x20/requests','requestState','sessionTableBody','href','\x20|\x20Total\x20de\x20Sessões:\x20','Aplicação:\x20','download','pass','\x27)\x22>❌\x20Encerrar</button>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20','createElement','/requests','</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>','clientConnInfo','80988WWBOIe','innerHTML','4889310ouHWUE','getElementById','GET','message','innerText','&terminateOpt=1','executerThreadId','sessionState','</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<button\x20class=\x22btn-info\x22\x20onclick=\x22getTrace(\x27','agentID','sessionId','Basic\x20','sessionManager','2713072CudbRn','requestProcedure','agentId','summaryText','createObjectURL','Falha\x20ao\x20gerar\x20o\x20Trace:\x20','ablSessionID','port','/agents','13867884WsUEly','Não\x20foi\x20possível\x20mapear\x20a\x20sessão\x20de\x20agente\x20para\x20a\x20requisição\x20ativa.\x20A\x20sessão\x20pode\x20não\x20estar\x20em\x20execução\x20no\x20momento.','53CEIBvn','/sessions','Falha\x20ao\x20encerrar\x20a\x20sessão:\x20','result','application/json','376434CRozGM','Erro\x20ao\x20encerrar:\x20','/sessions?sessionID=','<tr><td\x20colspan=\x228\x22\x20class=\x22loading\x22>Buscando\x20dados\x20no\x20PASOE...</td></tr>','trace_session_','25070enwLgK','appendChild','7383292wyhsgF','/sessions/','value','OEABLSession','\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td><strong>','pid','<tr><td\x20colspan=\x228\x22\x20class=\x22loading\x22>Nenhuma\x20sessão\x20encontrada.</td></tr>','appName','<br><small>Verifique\x20se\x20liberou\x20o\x20CORS\x20no\x20Tomcat\x20do\x20PASOE\x20para\x20acessar\x20via\x20navegador.</small></td></tr>','\x27)\x22>🔍\x20Trace</button>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<button\x20class=\x22btn-danger\x22\x20onclick=\x22terminateSession(\x27','Deseja\x20realmente\x20encerrar\x20a\x20sessão\x20ABL\x20','\x27,\x20\x27','144nxyjqy'];_0x19ad=function(){return _0x152ac1;};return _0x19ad();}(function(_0x55aa40,_0x3fe775){const _0x7cb806=_0x5e9c,_0x3bbb71=_0x55aa40();while(!![]){try{const _0x107cc5=parseInt(_0x7cb806(0x148))/0x1*(parseInt(_0x7cb806(0x152))/0x2)+-parseInt(_0x7cb806(0x12e))/0x3*(-parseInt(_0x7cb806(0x10a))/0x4)+-parseInt(_0x7cb806(0x130))/0x5+parseInt(_0x7cb806(0x14d))/0x6+parseInt(_0x7cb806(0x154))/0x7+parseInt(_0x7cb806(0x13d))/0x8+-parseInt(_0x7cb806(0x146))/0x9;if(_0x107cc5===_0x3fe775)break;else _0x3bbb71['push'](_0x3bbb71['shift']());}catch(_0x26e781){_0x3bbb71['push'](_0x3bbb71['shift']());}}}(_0x19ad,0x8c296));function _0x5e9c(_0x721218,_0x494922){_0x721218=_0x721218-0x103;const _0x19ad13=_0x19ad();let _0x5e9c93=_0x19ad13[_0x721218];return _0x5e9c93;}function getAuthHeader(){const _0x524e5c=_0x5e9c,_0x164cb8=document[_0x524e5c(0x131)]('user')[_0x524e5c(0x156)],_0xe7f4aa=document['getElementById'](_0x524e5c(0x128))[_0x524e5c(0x156)];return _0x524e5c(0x13b)+btoa(_0x164cb8+':'+_0xe7f4aa);}function getBaseUrl(){const _0x131064=_0x5e9c,_0x5476f2=document[_0x131064(0x131)]('host')[_0x131064(0x156)],_0x278411=document['getElementById'](_0x131064(0x144))['value'],_0x120e9c=document[_0x131064(0x131)](_0x131064(0x105))[_0x131064(0x156)];return _0x131064(0x118)+_0x5476f2+':'+_0x278411+'/oemanager/applications/'+_0x120e9c;}async function loadSessions(){const _0x46b7d3=_0x5e9c,_0x55fb49=document[_0x46b7d3(0x131)](_0x46b7d3(0x123));_0x55fb49[_0x46b7d3(0x12f)]=_0x46b7d3(0x150);const _0x7a2880=document['getElementById'](_0x46b7d3(0x105))['value'],_0x205bfa=getBaseUrl()+_0x46b7d3(0x149);try{const _0xa12562=await fetch(_0x205bfa,{'method':_0x46b7d3(0x132),'headers':{'Authorization':getAuthHeader()}});if(!_0xa12562['ok'])throw new Error(_0x46b7d3(0x11d)+_0xa12562[_0x46b7d3(0x112)]+'\x20'+_0xa12562[_0x46b7d3(0x10c)]);const _0x56a2c7=await _0xa12562[_0x46b7d3(0x111)](),_0x2bdbd0=_0x56a2c7[_0x46b7d3(0x14b)][_0x46b7d3(0x157)]||[];document['getElementById'](_0x46b7d3(0x140))[_0x46b7d3(0x134)]=_0x46b7d3(0x126)+_0x7a2880+_0x46b7d3(0x125)+_0x2bdbd0[_0x46b7d3(0x10f)],document[_0x46b7d3(0x131)](_0x46b7d3(0x11b))[_0x46b7d3(0x134)]='Última\x20atualização:\x20'+new Date()[_0x46b7d3(0x10e)](_0x46b7d3(0x115)),_0x55fb49[_0x46b7d3(0x12f)]='';if(_0x2bdbd0[_0x46b7d3(0x10f)]===0x0){_0x55fb49[_0x46b7d3(0x12f)]=_0x46b7d3(0x104);return;}_0x2bdbd0[_0x46b7d3(0x11e)](_0xc9db5c=>{const _0x193402=_0x46b7d3,_0xc7134b=_0xc9db5c[_0x193402(0x12d)]||{},_0xfe32d8=document['createElement']('tr'),_0x920f51=_0xc9db5c['sessionID'],_0x47bb8b=_0xc9db5c[_0x193402(0x139)];_0xfe32d8[_0x193402(0x12f)]=_0x193402(0x158)+(_0xc9db5c[_0x193402(0x143)]||'')+_0x193402(0x116)+_0xc9db5c[_0x193402(0x137)]+'\x22>'+(_0xc9db5c['sessionState']||'')+_0x193402(0x10d)+_0xc9db5c[_0x193402(0x122)]+'\x22>'+(_0xc9db5c[_0x193402(0x122)]||'')+_0x193402(0x12c)+(_0xc7134b[_0x193402(0x136)]||'')+_0x193402(0x12c)+(_0xc7134b[_0x193402(0x13e)]||'')+_0x193402(0x12c)+(_0xc7134b['clientName']||'')+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>'+(_0xc7134b['elapsedTimeMs']!==undefined?_0xc7134b['elapsedTimeMs']:'')+_0x193402(0x138)+_0x920f51+_0x193402(0x109)+_0x47bb8b+'\x27,\x20\x27'+_0xc9db5c[_0x193402(0x143)]+_0x193402(0x107)+_0x920f51+_0x193402(0x109)+_0xc9db5c[_0x193402(0x143)]+_0x193402(0x129),_0x55fb49[_0x193402(0x153)](_0xfe32d8);});}catch(_0x1ac7b8){_0x55fb49[_0x46b7d3(0x12f)]=_0x46b7d3(0x10b)+_0x1ac7b8[_0x46b7d3(0x133)]+_0x46b7d3(0x106);}}async function getTrace(_0x14d9cc,_0x13a530,_0x106caf){const _0xa8af09=_0x5e9c;try{const _0xf44e03=await fetch(getBaseUrl()+_0xa8af09(0x145),{'method':_0xa8af09(0x132),'headers':{'Authorization':getAuthHeader()}});if(!_0xf44e03['ok'])throw new Error('Erro\x20ao\x20buscar\x20/agents');const _0x39dc66=await _0xf44e03[_0xa8af09(0x111)](),_0x474032=_0x39dc66['result'][_0xa8af09(0x117)]||[],_0x3f8870=_0x474032[_0xa8af09(0x113)](_0x121b23=>_0x121b23[_0xa8af09(0x13f)]===_0x13a530)||_0x474032[0x0];if(!_0x3f8870||!_0x3f8870['pid'])throw new Error('PID\x20do\x20Agente\x20não\x20foi\x20localizado.');const _0x284f19=_0x3f8870[_0xa8af09(0x103)],_0x3321b1=await fetch(getBaseUrl()+_0xa8af09(0x12b),{'method':_0xa8af09(0x132),'headers':{'Authorization':getAuthHeader()}});if(!_0x3321b1['ok'])throw new Error(_0xa8af09(0x121));const _0x1b1488=await _0x3321b1[_0xa8af09(0x111)](),_0x2c419e=_0x1b1488[_0xa8af09(0x14b)]['Request']||[],_0x12d711=_0x2c419e[_0xa8af09(0x113)](_0x116d5e=>_0x116d5e[_0xa8af09(0x13c)]&&_0x116d5e[_0xa8af09(0x13c)]['sessionId']===_0x14d9cc);if(!_0x12d711||!_0x12d711[_0xa8af09(0x120)]||!_0x12d711[_0xa8af09(0x120)][_0xa8af09(0x13a)])throw new Error(_0xa8af09(0x147));const _0x3ff3e3=_0x12d711['agent'][_0xa8af09(0x13a)],_0x43bbf4=getBaseUrl()+'/agents/'+_0x284f19+_0xa8af09(0x155)+_0x3ff3e3+_0xa8af09(0x114),_0x2e4c4e=await fetch(_0x43bbf4,{'method':_0xa8af09(0x132),'headers':{'Authorization':getAuthHeader()}});if(!_0x2e4c4e['ok'])throw new Error('Erro\x20ao\x20buscar\x20Stacks:\x20'+_0x2e4c4e[_0xa8af09(0x112)]);const _0x4d5448=await _0x2e4c4e[_0xa8af09(0x111)](),_0x9ebbe4=JSON[_0xa8af09(0x11c)](_0x4d5448,null,0x2),_0x594c99=new Blob([_0x9ebbe4],{'type':_0xa8af09(0x14c)}),_0x309606=URL[_0xa8af09(0x141)](_0x594c99),_0x5c4e1b=document[_0xa8af09(0x12a)]('a');_0x5c4e1b[_0xa8af09(0x124)]=_0x309606,_0x5c4e1b[_0xa8af09(0x127)]=_0xa8af09(0x151)+_0x106caf+'_pid_'+_0x284f19+'.json',document['body'][_0xa8af09(0x153)](_0x5c4e1b),_0x5c4e1b['click'](),document[_0xa8af09(0x11f)][_0xa8af09(0x110)](_0x5c4e1b),URL['revokeObjectURL'](_0x309606);}catch(_0x26c222){alert(_0xa8af09(0x142)+_0x26c222[_0xa8af09(0x133)]);}}async function terminateSession(_0x151e25,_0x3a48c1){const _0x462fc9=_0x5e9c;if(!confirm(_0x462fc9(0x108)+_0x3a48c1+'?'))return;const _0x13827a=getBaseUrl()+_0x462fc9(0x14f)+encodeURIComponent(_0x151e25)+_0x462fc9(0x135);try{const _0x20321d=await fetch(_0x13827a,{'method':_0x462fc9(0x119),'headers':{'Authorization':getAuthHeader()}});if(!_0x20321d['ok'])throw new Error(_0x462fc9(0x14e)+_0x20321d[_0x462fc9(0x112)]+'\x20'+_0x20321d[_0x462fc9(0x10c)]);alert(_0x462fc9(0x11a)+_0x3a48c1+'\x20encerrada\x20com\x20sucesso!'),loadSessions();}catch(_0x581bb9){alert(_0x462fc9(0x14a)+_0x581bb9['message']);}}
+ function getAuthHeader(){const a=document['getElementById']('user')['value'],b=document['getElementById']('pass')['value'];return'Basic\x20'+btoa(a+':'+b);}function getBaseUrl(){const a=document['getElementById']('host')['value'],b=document['getElementById']('port')['value'],c=document['getElementById']('appName')['value'];return'http://'+a+':'+b+'/oemanager/applications/'+c;}async function loadSessions(){const a=document['getElementById']('sessionTableBody');a['innerHTML']='<tr><td\x20colspan=\x228\x22\x20class=\x22loading\x22>Buscando\x20dados\x20no\x20PASOE...</td></tr>';const b=document['getElementById']('appName')['value'],c=getBaseUrl()+'/sessions';try{const d=await fetch(c,{'method':'GET','headers':{'Authorization':getAuthHeader()}});if(!d['ok'])throw new Error('Erro\x20na\x20requisição:\x20'+d['status']+'\x20'+d['statusText']);const e=await d['json'](),f=e['result']['OEABLSession']||[];document['getElementById']('summaryText')['innerText']='Aplicação:\x20'+b+'\x20|\x20Total\x20de\x20Sessões:\x20'+f['length'],document['getElementById']('lastUpdate')['innerText']='Última\x20atualização:\x20'+new Date()['toLocaleTimeString']('pt-BR'),a['innerHTML']='';if(f['length']===0x0){a['innerHTML']='<tr><td\x20colspan=\x228\x22\x20class=\x22loading\x22>Nenhuma\x20sessão\x20encontrada.</td></tr>';return;}f['forEach'](g=>{const h=g['clientConnInfo']||{},i=document['createElement']('tr'),j=g['sessionID'],k=g['agentID'];i['innerHTML']='\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td><strong>'+(g['ablSessionID']||'')+'</strong></td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td\x20class=\x22'+g['sessionState']+'\x22>'+(g['sessionState']||'')+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td\x20class=\x22'+g['requestState']+'\x22>'+(g['requestState']||'')+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>'+(h['executerThreadId']||'')+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>'+(h['requestProcedure']||'')+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>'+(h['clientName']||'')+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>'+(h['elapsedTimeMs']!==undefined?h['elapsedTimeMs']:'')+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<button\x20class=\x22btn-info\x22\x20onclick=\x22getTrace(\x27'+j+'\x27,\x20\x27'+k+'\x27,\x20\x27'+g['ablSessionID']+'\x27)\x22>🔍\x20Trace</button>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<button\x20class=\x22btn-danger\x22\x20onclick=\x22terminateSession(\x27'+j+'\x27,\x20\x27'+g['ablSessionID']+'\x27)\x22>❌\x20Encerrar</button>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20',a['appendChild'](i);});}catch(g){a['innerHTML']='<tr><td\x20colspan=\x228\x22\x20class=\x22loading\x22\x20style=\x22color:\x20#d9534f;\x22>'+g['message']+'<br><small>Verifique\x20se\x20liberou\x20o\x20CORS\x20no\x20Tomcat\x20do\x20PASOE\x20para\x20acessar\x20via\x20navegador.</small></td></tr>';}}async function getTrace(a,b,c){const d=document['getElementById']('traceModal'),e=document['getElementById']('modalBody');document['getElementById']('modalTitle')['innerText']='Stack\x20Trace\x20-\x20Sessão\x20ABL\x20'+c,e['innerHTML']='\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22spinner-container\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22spinner\x22></div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22color:\x20#6c757d;\x20font-size:\x200.9em;\x22>Mapeando\x20requisições\x20e\x20gerando\x20trace...</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20',d['style']['display']='flex';try{const f=await fetch(getBaseUrl()+'/agents',{'method':'GET','headers':{'Authorization':getAuthHeader()}});if(!f['ok'])throw new Error('Erro\x20ao\x20buscar\x20/agents');const g=await f['json'](),h=g['result']['agents']||[],i=h['find'](t=>t['agentId']===b)||h[0x0];if(!i||!i['pid'])throw new Error('PID\x20do\x20Agente\x20não\x20foi\x20localizado.');const j=i['pid'],k=await fetch(getBaseUrl()+'/requests',{'method':'GET','headers':{'Authorization':getAuthHeader()}});if(!k['ok'])throw new Error('Erro\x20ao\x20buscar\x20/requests');const l=await k['json'](),m=l['result']['Request']||[],n=m['find'](t=>t['sessionManager']&&t['sessionManager']['sessionId']===a);if(!n||!n['agent']||!n['agent']['sessionId'])throw new Error('Não\x20foi\x20possível\x20mapear\x20a\x20sessão\x20de\x20agente.\x20A\x20sessão\x20precisa\x20estar\x20em\x20estado\x20RUNNING\x20para\x20obter\x20a\x20stack.');const o=n['agent']['sessionId'],p=getBaseUrl()+'/agents/'+j+'/sessions/'+o+'/stacks',q=await fetch(p,{'method':'GET','headers':{'Authorization':getAuthHeader()}});if(!q['ok'])throw new Error('Erro\x20ao\x20buscar\x20Stacks:\x20'+q['status']);const r=await q['json'](),s=JSON['stringify'](r,null,0x2);e['innerHTML']='\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22margin-bottom:\x2010px;\x20display:\x20flex;\x20justify-content:\x20space-between;\x20align-items:\x20center;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<small\x20style=\x22color:\x20#6c757d;\x22>PID:\x20<strong>'+j+'</strong>\x20|\x20Agent\x20Session\x20ID:\x20<strong>'+o+'</strong></small>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<button\x20class=\x22btn-info\x22\x20onclick=\x22downloadTraceJson(\x27'+c+'\x27,\x20\x27'+j+'\x27,\x20`'+encodeURIComponent(s)+'`)\x22>💾\x20Baixar\x20.json</button>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<pre><code>'+s+'</code></pre>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20';}catch(t){e['innerHTML']='\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22color:\x20#d9534f;\x20text-align:\x20center;\x20padding:\x2020px;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<strong>⚠️\x20Falha\x20ao\x20obter\x20o\x20Trace:</strong><br><br>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20'+t['message']+'\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20';}}function downloadTraceJson(b,c,d){const e=decodeURIComponent(d),f=new Blob([e],{'type':'application/json'}),g=URL['createObjectURL'](f),h=document['createElement']('a');h['href']=g,h['download']='trace_session_'+b+'_pid_'+c+'.json',document['body']['appendChild'](h),h['click'](),document['body']['removeChild'](h),URL['revokeObjectURL'](g);}function closeModal(){document['getElementById']('traceModal')['style']['display']='none';}async function terminateSession(a,b){if(!confirm('Deseja\x20realmente\x20encerrar\x20a\x20sessão\x20ABL\x20'+b+'?'))return;const c=getBaseUrl()+'/sessions?sessionID='+encodeURIComponent(a)+'&terminateOpt=1';try{const d=await fetch(c,{'method':'DELETE','headers':{'Authorization':getAuthHeader()}});if(!d['ok'])throw new Error('Erro\x20ao\x20encerrar:\x20'+d['status']+'\x20'+d['statusText']);alert('Sessão\x20'+b+'\x20encerrada\x20com\x20sucesso!'),loadSessions();}catch(e){alert('Falha\x20ao\x20encerrar\x20a\x20sessão:\x20'+e['message']);}}
     </script>
 </body>
 </html>
