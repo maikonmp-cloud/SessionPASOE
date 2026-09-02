@@ -130,6 +130,21 @@
         }
         .btn:hover { background-color: #004085; }
 
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85em;
+            height: 33px;
+            white-space: nowrap;
+            flex: 0 0 auto;
+        }
+        .btn-secondary:hover { background-color: #5a6268; }
+
         .btn-info {
             background-color: #17a2b8;
             color: white;
@@ -195,7 +210,7 @@
         @media (max-width: 992px) {
             body { margin: 15px; }
             .form-group-large { flex: 1 1 100%; }
-            .btn { width: 100%; margin-top: 5px; }
+            .btn, .btn-secondary { width: 100%; margin-top: 5px; }
         }
 
         /* Modal e Spinner */
@@ -325,7 +340,7 @@
             font-size: 0.78em;
             white-space: pre-wrap;
             word-break: break-all;
-            max-height: 140px;
+            max-height: 350px;
             overflow-y: auto;
             margin-top: 5px;
         }
@@ -375,6 +390,8 @@
             </div>
 
             <button class="btn" onclick="manualSearch()">🔄 Buscar Sessões</button>
+            <button class="btn-secondary" onclick="loadAgents()">🤖 Agentes</button>
+            <button class="btn-secondary" onclick="loadPropath()">📂 Propath</button>
         </div>
 
         <div class="header-info">
@@ -405,11 +422,11 @@
         </div>
     </div>
 
-    <!-- Modal para Exibição do Trace -->
+    <!-- Modal Genérico para Exibição de Dados (Trace, Agentes e Propath) -->
     <div id="traceModal" class="modal-overlay">
         <div class="modal-container">
             <div class="modal-header">
-                <h3 id="modalTitle">Stack Trace da Sessão</h3>
+                <h3 id="modalTitle">Detalhamento</h3>
                 <button class="close-btn" onclick="closeModal()">✕</button>
             </div>
             <div class="modal-body" id="modalBody"></div>
@@ -418,11 +435,509 @@
 
     <!-- Rodapé da Aplicação -->
     <footer>
-        <img src="totvs.svg" alt="TOTVS Logo" class="footer-logo">
+        <img src="totvs.webp" alt="TOTVS Logo" class="footer-logo">
     </footer>
 
     <script>
-let environmentsData=[],activeAuth={'user':'','pass':''},autoRefreshTimer=null;async function loadConfig(){try{const a=await fetch('config.json');if(!a['ok'])throw new Error('Não\x20foi\x20possível\x20carregar\x20o\x20arquivo\x20config.json');environmentsData=await a['json']();const b=document['getElementById']('environmentSelect');b['innerHTML']='',environmentsData['forEach']((c,d)=>{const e=document['createElement']('option');e['value']=d,e['textContent']=c['name'],b['appendChild'](e);}),environmentsData['length']>0x0&&onEnvironmentChange();}catch(c){console['error']('Erro\x20ao\x20carregar\x20configurações:',c),document['getElementById']('environmentSelect')['innerHTML']='<option\x20value=\x22\x22>Falha\x20ao\x20carregar\x20config.json</option>';}}function onEnvironmentChange(){stopAutoRefresh();const a=document['getElementById']('environmentSelect')['value'];if(a===''||!environmentsData[a])return;const b=environmentsData[a];document['getElementById']('type')['value']=b['type']||'',document['getElementById']('host')['value']=b['host']||'',document['getElementById']('port')['value']=b['port']||'',document['getElementById']('appName')['value']=b['appName']||'',activeAuth['user']=b['user']||'',activeAuth['pass']=b['pass']||'';}function toggleAutoRefresh(){const a=document['getElementById']('autoRefreshToggle')['checked'],b=document['getElementById']('autoRefreshStatus');a?(b['innerText']='ON',b['style']['color']='#28a745',loadSessions(!![]),autoRefreshTimer=setInterval(()=>loadSessions(!![]),0x1388)):stopAutoRefresh();}function stopAutoRefresh(){autoRefreshTimer&&(clearInterval(autoRefreshTimer),autoRefreshTimer=null);document['getElementById']('autoRefreshToggle')['checked']=![];const a=document['getElementById']('autoRefreshStatus');a['innerText']='OFF',a['style']['color']='#6c757d';}function manualSearch(){loadSessions(![]);}function getAuthHeader(){return'Basic\x20'+btoa(activeAuth['user']+':'+activeAuth['pass']);}function getBaseUrl(){const a=document['getElementById']('host')['value'],b=document['getElementById']('port')['value'],c=document['getElementById']('appName')['value'];return'http://'+a+':'+b+'/oemanager/applications/'+c;}async function loadSessions(a=![]){const b=document['getElementById']('sessionTableBody');!a&&(b['innerHTML']='<tr><td\x20colspan=\x228\x22\x20class=\x22loading\x22>Buscando\x20dados\x20no\x20PASOE...</td></tr>');const c=document['getElementById']('appName')['value'],d=getBaseUrl()+'/sessions';try{const e=await fetch(d,{'method':'GET','headers':{'Authorization':getAuthHeader()}});if(!e['ok'])throw new Error('Erro\x20na\x20requisição:\x20'+e['status']+'\x20'+e['statusText']);const f=await e['json'](),g=f['result']['OEABLSession']||[];document['getElementById']('summaryText')['innerText']='Aplicação:\x20'+c+'\x20|\x20Total\x20de\x20Sessões:\x20'+g['length'],document['getElementById']('lastUpdate')['innerText']='Última\x20atualização:\x20'+new Date()['toLocaleTimeString']('pt-BR'),b['innerHTML']='';if(g['length']===0x0){b['innerHTML']='<tr><td\x20colspan=\x228\x22\x20class=\x22loading\x22>Nenhuma\x20sessão\x20encontrada.</td></tr>';return;}g['forEach'](h=>{const i=h['clientConnInfo']||{},j=document['createElement']('tr'),k=h['sessionID'],l=h['agentID'];j['innerHTML']='\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td><strong>'+(h['ablSessionID']||'')+'</strong></td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td\x20class=\x22'+h['sessionState']+'\x22>'+(h['sessionState']||'')+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td\x20class=\x22'+h['requestState']+'\x22>'+(h['requestState']||'')+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>'+(i['executerThreadId']||'')+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>'+(i['requestProcedure']||'')+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>'+(i['clientName']||'')+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>'+(i['elapsedTimeMs']!==undefined?i['elapsedTimeMs']:'')+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<button\x20class=\x22btn-info\x22\x20onclick=\x22getTrace(\x27'+k+'\x27,\x20\x27'+l+'\x27,\x20\x27'+h['ablSessionID']+'\x27)\x22>🔍\x20Trace</button>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<button\x20class=\x22btn-danger\x22\x20onclick=\x22terminateSession(\x27'+k+'\x27,\x20\x27'+h['ablSessionID']+'\x27)\x22>❌\x20Encerrar</button>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20',b['appendChild'](j);});}catch(h){stopAutoRefresh(),b['innerHTML']='<tr><td\x20colspan=\x228\x22\x20class=\x22loading\x22\x20style=\x22color:\x20#d9534f;\x22>'+h['message']+'<br><small>Verifique\x20se\x20liberou\x20o\x20CORS\x20no\x20Tomcat\x20do\x20PASOE\x20para\x20acessar\x20via\x20navegador.</small></td></tr>';}}async function getTrace(a,b,c){const d=document['getElementById']('traceModal'),e=document['getElementById']('modalBody');document['getElementById']('modalTitle')['innerText']='Stack\x20Trace\x20-\x20Sessão\x20ABL\x20'+c,e['innerHTML']='\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22spinner-container\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22spinner\x22></div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22color:\x20#6c757d;\x20font-size:\x200.9em;\x22>Mapeando\x20requisições\x20e\x20gerando\x20trace...</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20',d['style']['display']='flex';try{const f=await fetch(getBaseUrl()+'/agents',{'method':'GET','headers':{'Authorization':getAuthHeader()}});if(!f['ok'])throw new Error('Erro\x20ao\x20buscar\x20/agents');const g=await f['json'](),h=g['result']['agents']||[],i=h['find'](C=>C['agentId']===b)||h[0x0];if(!i||!i['pid'])throw new Error('PID\x20do\x20Agente\x20não\x20foi\x20localizado.');const j=i['pid'],k=await fetch(getBaseUrl()+'/requests',{'method':'GET','headers':{'Authorization':getAuthHeader()}});if(!k['ok'])throw new Error('Erro\x20ao\x20buscar\x20/requests');const l=await k['json'](),m=l['result']['Request']||[],n=m['find'](C=>C['sessionManager']&&C['sessionManager']['sessionId']===a);if(!n||!n['agent']||!n['agent']['sessionId'])throw new Error('Não\x20foi\x20possível\x20mapear\x20a\x20sessão\x20de\x20agente.\x20A\x20sessão\x20precisa\x20estar\x20em\x20estado\x20RUNNING\x20para\x20obter\x20a\x20stack.');const o=n['agent']['sessionId'],p=getBaseUrl()+'/agents/'+j+'/sessions/'+o+'/stacks',q=await fetch(p,{'method':'GET','headers':{'Authorization':getAuthHeader()}});if(!q['ok'])throw new Error('Erro\x20ao\x20buscar\x20Stacks:\x20'+q['status']);const r=await q['json'](),s=JSON['stringify'](r,null,0x2),t=r['result']?.['ABLStacks']?.[0x0]||{},u=t['Callstack']||[],v=t['Databases']||[],w=t['PersProcs']||[],x=t['OO4GLObjs']||[],y=t['Propath']||'',z=t['Status']||'N/A';let A='';Array['isArray'](u)&&u['length']>0x0?u['forEach']((C,D)=>{const E=C['Routine']||'-',F=C['Source']||'-',G=C['Line']!==undefined?C['Line']:'-';A+='\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<tr>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td\x20style=\x22text-align:\x20center;\x20width:\x2040px;\x20font-weight:\x20bold;\x22>'+(D+0x1)+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td\x20style=\x22color:\x20#0056b3;\x20font-weight:\x20bold;\x22>'+E+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>'+F+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td\x20style=\x22text-align:\x20center;\x20width:\x2080px;\x20font-weight:\x20bold;\x20color:\x20#d9534f;\x22>'+G+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</tr>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20';}):A='<tr><td\x20colspan=\x224\x22\x20style=\x22text-align:\x20center;\x20color:\x20#6c757d;\x22>Nenhuma\x20pilha\x20de\x20execução\x20em\x20andamento\x20no\x20momento.</td></tr>';let B='';Array['isArray'](v)&&v['length']>0x0?v['forEach'](C=>{B+='\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<tr>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td\x20style=\x22font-weight:\x20bold;\x20color:\x20#28a745;\x22>'+(C['LDBNAME']||'-')+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td\x20style=\x22text-align:\x20center;\x22>'+(C['DBTYPE']||'-')+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td>'+(C['DBNAME']||'-')+'</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</tr>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20';}):B='<tr><td\x20colspan=\x223\x22\x20style=\x22text-align:\x20center;\x20color:\x20#6c757d;\x22>Nenhum\x20banco\x20de\x20dados\x20conectado.</td></tr>',e['innerHTML']='\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22margin-bottom:\x2015px;\x20display:\x20flex;\x20justify-content:\x20space-between;\x20align-items:\x20center;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20style=\x22font-size:\x200.9em;\x20font-weight:\x20bold;\x20color:\x20#495057;\x22>Estado\x20da\x20Sessão:</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<span\x20style=\x22background-color:\x20#d9534f;\x20color:\x20white;\x20padding:\x202px\x208px;\x20border-radius:\x204px;\x20font-size:\x200.8em;\x20font-weight:\x20bold;\x22>'+z+'</span>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<button\x20class=\x22btn-info\x22\x20onclick=\x22downloadTraceJson(\x27'+c+'\x27,\x20\x27'+j+'\x27,\x20`'+encodeURIComponent(s)+'`)\x22>💾\x20Baixar\x20.json</button>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22trace-card-grid\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22trace-card\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22trace-card-label\x22>PID\x20do\x20Agente</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22trace-card-value\x22>'+j+'</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22trace-card\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22trace-card-label\x22>Agent\x20Session\x20ID</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22trace-card-value\x22>'+o+'</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22trace-card\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22trace-card-label\x22>Bancos\x20Conectados</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22trace-card-value\x22>'+v['length']+'</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22trace-card\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22trace-card-label\x22>Procedures\x20Persistentes</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22trace-card-value\x22>'+w['length']+'</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22trace-card\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22trace-card-label\x22>Objetos\x20OO4GL</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22trace-card-value\x22>'+x['length']+'</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22margin-top:\x2015px;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<strong\x20style=\x22font-size:\x200.85em;\x20color:\x20#495057;\x20text-transform:\x20uppercase;\x22>Pilha\x20de\x20Chamadas\x20(Callstack)</strong>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<table\x20class=\x22stack-table\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<thead>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<tr>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<th\x20style=\x22text-align:\x20center;\x22>#</th>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<th>Rotina\x20/\x20Função</th>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<th>Arquivo\x20Fonte\x20(.r\x20/\x20.p)</th>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<th\x20style=\x22text-align:\x20center;\x22>Linha</th>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</tr>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</thead>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<tbody>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20'+A+'\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</tbody>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</table>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22margin-top:\x2015px;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<strong\x20style=\x22font-size:\x200.85em;\x20color:\x20#495057;\x20text-transform:\x20uppercase;\x22>Bancos\x20Conectados\x20(Databases)</strong>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<table\x20class=\x22stack-table\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<thead>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<tr>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<th>Nome\x20Lógico\x20(LDBNAME)</th>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<th\x20style=\x22text-align:\x20center;\x22>Tipo</th>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<th>Caminho\x20do\x20Banco\x20(DBNAME)</th>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</tr>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</thead>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<tbody>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20'+B+'\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</tbody>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</table>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20'+(y?'\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22margin-top:\x2015px;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<strong\x20style=\x22font-size:\x200.85em;\x20color:\x20#495057;\x20text-transform:\x20uppercase;\x22>Propath</strong>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22code-box\x22\x20style=\x22color:\x20#66d9ef;\x22>'+y['split'](',')['join']('\x0a')+'</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20':'')+'\x0a\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20'+(t['StartupParams']?'\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22margin-top:\x2015px;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<strong\x20style=\x22font-size:\x200.85em;\x20color:\x20#495057;\x20text-transform:\x20uppercase;\x22>Parâmetros\x20de\x20Inicialização\x20(Startup\x20Params)</strong>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20class=\x22code-box\x22>'+t['StartupParams']+'</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20':'')+'\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20';}catch(C){e['innerHTML']='\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<div\x20style=\x22color:\x20#d9534f;\x20text-align:\x20center;\x20padding:\x2020px;\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<strong>⚠️\x20Falha\x20ao\x20obter\x20o\x20Trace:</strong><br><br>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20'+C['message']+'\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20';}}function downloadTraceJson(b,c,d){const e=decodeURIComponent(d),f=new Blob([e],{'type':'application/json'}),g=URL['createObjectURL'](f),h=document['createElement']('a');h['href']=g,h['download']='trace_session_'+b+'_pid_'+c+'.json',document['body']['appendChild'](h),h['click'](),document['body']['removeChild'](h),URL['revokeObjectURL'](g);}function closeModal(){document['getElementById']('traceModal')['style']['display']='none';}async function terminateSession(a,b){if(!confirm('Deseja\x20realmente\x20encerrar\x20a\x20sessão\x20ABL\x20'+b+'?'))return;const c=getBaseUrl()+'/sessions?sessionID='+encodeURIComponent(a)+'&terminateOpt=1';try{const d=await fetch(c,{'method':'DELETE','headers':{'Authorization':getAuthHeader()}});if(!d['ok'])throw new Error('Erro\x20ao\x20encerrar:\x20'+d['status']+'\x20'+d['statusText']);alert('Sessão\x20'+b+'\x20encerrada\x20com\x20sucesso!'),loadSessions(![]);}catch(e){alert('Falha\x20ao\x20encerrar\x20a\x20sessão:\x20'+e['message']);}}window['onload']=loadConfig;
+        let environmentsData = [];
+        let activeAuth = { user: '', pass: '' };
+        let autoRefreshTimer = null;
+
+        async function loadConfig() {
+            try {
+                const response = await fetch('config.json');
+                if (!response.ok) throw new Error("Não foi possível carregar o arquivo config.json");
+                
+                environmentsData = await response.json();
+                const select = document.getElementById('environmentSelect');
+                select.innerHTML = '';
+
+                environmentsData.forEach((env, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = env.name;
+                    select.appendChild(option);
+                });
+
+                if (environmentsData.length > 0) {
+                    onEnvironmentChange();
+                }
+            } catch (error) {
+                console.error("Erro ao carregar configurações:", error);
+                document.getElementById('environmentSelect').innerHTML = '<option value="">Falha ao carregar config.json</option>';
+            }
+        }
+
+        function onEnvironmentChange() {
+            stopAutoRefresh();
+            const index = document.getElementById('environmentSelect').value;
+            if (index === "" || !environmentsData[index]) return;
+
+            const selectedEnv = environmentsData[index];
+            
+            document.getElementById('type').value = selectedEnv.type || '';
+            document.getElementById('host').value = selectedEnv.host || '';
+            document.getElementById('port').value = selectedEnv.port || '';
+            document.getElementById('appName').value = selectedEnv.appName || '';
+            
+            activeAuth.user = selectedEnv.user || '';
+            activeAuth.pass = selectedEnv.pass || '';
+        }
+
+        function toggleAutoRefresh() {
+            const isChecked = document.getElementById('autoRefreshToggle').checked;
+            const statusLabel = document.getElementById('autoRefreshStatus');
+
+            if (isChecked) {
+                statusLabel.innerText = "ON";
+                statusLabel.style.color = "#28a745";
+                loadSessions(true);
+                autoRefreshTimer = setInterval(() => loadSessions(true), 5000);
+            } else {
+                stopAutoRefresh();
+            }
+        }
+
+        function stopAutoRefresh() {
+            if (autoRefreshTimer) {
+                clearInterval(autoRefreshTimer);
+                autoRefreshTimer = null;
+            }
+            document.getElementById('autoRefreshToggle').checked = false;
+            const statusLabel = document.getElementById('autoRefreshStatus');
+            statusLabel.innerText = "OFF";
+            statusLabel.style.color = "#6c757d";
+        }
+
+        function manualSearch() {
+            loadSessions(false);
+        }
+
+        function getAuthHeader() {
+            return 'Basic ' + btoa(`${activeAuth.user}:${activeAuth.pass}`);
+        }
+
+        function getBaseUrl() {
+            const host = document.getElementById('host').value;
+            const port = document.getElementById('port').value;
+            const appName = document.getElementById('appName').value;
+            return `http://${host}:${port}/oemanager/applications/${appName}`;
+        }
+
+        async function loadSessions(isBackgroundRefresh = false) {
+            const tbody = document.getElementById('sessionTableBody');
+            
+            if (!isBackgroundRefresh) {
+                tbody.innerHTML = '<tr><td colspan="8" class="loading">Buscando dados no PASOE...</td></tr>';
+            }
+
+            const appName = document.getElementById('appName').value;
+            const endpoint = `${getBaseUrl()}/sessions`;
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'GET',
+                    headers: { 'Authorization': getAuthHeader() }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                const sessions = data.result.OEABLSession || [];
+
+                document.getElementById('summaryText').innerText = `Aplicação: ${appName} | Total de Sessões: ${sessions.length}`;
+                document.getElementById('lastUpdate').innerText = `Última atualização: ${new Date().toLocaleTimeString('pt-BR')}`;
+
+                tbody.innerHTML = '';
+
+                if (sessions.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="loading">Nenhuma sessão encontrada.</td></tr>';
+                    return;
+                }
+
+                sessions.forEach(session => {
+                    const clientInfo = session.clientConnInfo || {};
+                    const tr = document.createElement('tr');
+                    const fullSessionID = session.sessionID;
+                    const agentID = session.agentID;
+
+                    tr.innerHTML = `
+                        <td><strong>${session.ablSessionID || ''}</strong></td>
+                        <td class="${session.sessionState}">${session.sessionState || ''}</td>
+                        <td class="${session.requestState}">${session.requestState || ''}</td>
+                        <td>${clientInfo.executerThreadId || ''}</td>
+                        <td>${clientInfo.requestProcedure || ''}</td>
+                        <td>${clientInfo.clientName || ''}</td>
+                        <td>${clientInfo.elapsedTimeMs !== undefined ? clientInfo.elapsedTimeMs : ''}</td>
+                        <td>
+                            <button class="btn-info" onclick="getTrace('${fullSessionID}', '${agentID}', '${session.ablSessionID}')">🔍 Trace</button>
+                            <button class="btn-danger" onclick="terminateSession('${fullSessionID}', '${session.ablSessionID}')">❌ Encerrar</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+            } catch (error) {
+                stopAutoRefresh();
+                tbody.innerHTML = `<tr><td colspan="8" class="loading" style="color: #d9534f;">${error.message}<br><small>Verifique se liberou o CORS no Tomcat do PASOE para acessar via navegador.</small></td></tr>`;
+            }
+        }
+
+        // Função do novo botão "Agentes"
+        async function loadAgents() {
+            const modal = document.getElementById('traceModal');
+            const modalBody = document.getElementById('modalBody');
+            document.getElementById('modalTitle').innerText = `Agentes PASOE - ${document.getElementById('appName').value}`;
+            
+            modalBody.innerHTML = `
+                <div class="spinner-container">
+                    <div class="spinner"></div>
+                    <div style="color: #6c757d; font-size: 0.9em;">Buscando agentes da instância...</div>
+                </div>
+            `;
+            modal.style.display = 'flex';
+
+            try {
+                const response = await fetch(`${getBaseUrl()}/agents`, {
+                    method: 'GET',
+                    headers: { 'Authorization': getAuthHeader() }
+                });
+
+                if (!response.ok) throw new Error(`Erro ao buscar /agents: ${response.status}`);
+
+                const data = await response.json();
+                const agentsList = data.result?.agents || [];
+
+                let agentRows = '';
+                if (agentsList.length > 0) {
+                    agentsList.forEach((agent, index) => {
+                        agentRows += `
+                            <tr>
+                                <td style="text-align: center; font-weight: bold;">${index + 1}</td>
+                                <td><strong style="color: #0056b3;">${agent.agentId || '-'}</strong></td>
+                                <td style="font-weight: bold;">${agent.pid || '-'}</td>
+                                <td class="${agent.state}" style="font-weight: bold;">${agent.state || '-'}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    agentRows = '<tr><td colspan="4" style="text-align: center; color: #6c757d;">Nenhum agente localizado.</td></tr>';
+                }
+
+                modalBody.innerHTML = `
+                    <div style="margin-bottom: 10px;">
+                        <small style="color: #6c757d;">Total de Agentes Ativos: <strong>${agentsList.length}</strong></small>
+                    </div>
+                    <table class="stack-table">
+                        <thead>
+                            <tr>
+                                <th style="text-align: center; width: 40px;">#</th>
+                                <th>Agent ID</th>
+                                <th>PID (Processo)</th>
+                                <th>Status (State)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${agentRows}
+                        </tbody>
+                    </table>
+                `;
+
+            } catch (error) {
+                modalBody.innerHTML = `
+                    <div style="color: #d9534f; text-align: center; padding: 20px;">
+                        <strong>⚠️ Falha ao buscar Agentes:</strong><br><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Função do novo botão "Propath"
+        async function loadPropath() {
+            const modal = document.getElementById('traceModal');
+            const modalBody = document.getElementById('modalBody');
+            const appName = document.getElementById('appName').value;
+            document.getElementById('modalTitle').innerText = `Propath do Agente - ${appName}`;
+            
+            modalBody.innerHTML = `
+                <div class="spinner-container">
+                    <div class="spinner"></div>
+                    <div style="color: #6c757d; font-size: 0.9em;">Carregando propriedades do agente...</div>
+                </div>
+            `;
+            modal.style.display = 'flex';
+
+            try {
+                const response = await fetch(`${getBaseUrl()}/agents/properties`, {
+                    method: 'GET',
+                    headers: { 'Authorization': getAuthHeader() }
+                });
+
+                if (!response.ok) throw new Error(`Erro ao buscar /agents/properties: ${response.status}`);
+
+                const data = await response.json();
+                const properties = data.result || {};
+                const propathRaw = properties.PROPATH || '';
+
+                if (!propathRaw) {
+                    modalBody.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 20px;">Nenhum PROPATH encontrado nas propriedades.</div>';
+                    return;
+                }
+
+                // Trata caminhos separados por vírgula (Windows/Linux)
+                const propathFormatted = propathRaw.split(',').join('\n');
+
+                modalBody.innerHTML = `
+                    <div style="margin-bottom: 10px;">
+                        <small style="color: #6c757d;">Diretórios e bibliotecas .pl mapeadas no PROPATH do Agente:</small>
+                    </div>
+                    <div class="code-box" style="color: #66d9ef; max-height: 450px;">${propathFormatted}</div>
+                `;
+
+            } catch (error) {
+                modalBody.innerHTML = `
+                    <div style="color: #d9534f; text-align: center; padding: 20px;">
+                        <strong>⚠️ Falha ao buscar Propath:</strong><br><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function getTrace(fullSessionID, agentID, ablSessionID) {
+            const modal = document.getElementById('traceModal');
+            const modalBody = document.getElementById('modalBody');
+            document.getElementById('modalTitle').innerText = `Stack Trace - Sessão ABL ${ablSessionID}`;
+            
+            modalBody.innerHTML = `
+                <div class="spinner-container">
+                    <div class="spinner"></div>
+                    <div style="color: #6c757d; font-size: 0.9em;">Mapeando requisições e gerando trace...</div>
+                </div>
+            `;
+            modal.style.display = 'flex';
+
+            try {
+                const agentsResponse = await fetch(`${getBaseUrl()}/agents`, {
+                    method: 'GET',
+                    headers: { 'Authorization': getAuthHeader() }
+                });
+                if (!agentsResponse.ok) throw new Error("Erro ao buscar /agents");
+                
+                const agentsData = await agentsResponse.json();
+                const agentsList = agentsData.result.agents || [];
+                
+                const targetAgent = agentsList.find(a => a.agentId === agentID) || agentsList[0];
+                if (!targetAgent || !targetAgent.pid) {
+                    throw new Error("PID do Agente não foi localizado.");
+                }
+                const pid = targetAgent.pid;
+
+                const requestsResponse = await fetch(`${getBaseUrl()}/requests`, {
+                    method: 'GET',
+                    headers: { 'Authorization': getAuthHeader() }
+                });
+                if (!requestsResponse.ok) throw new Error("Erro ao buscar /requests");
+
+                const requestsData = await requestsResponse.json();
+                const requestsList = requestsData.result.Request || [];
+
+                const matchedRequest = requestsList.find(r => r.sessionManager && r.sessionManager.sessionId === fullSessionID);
+                
+                if (!matchedRequest || !matchedRequest.agent || !matchedRequest.agent.sessionId) {
+                    throw new Error(`Não foi possível mapear a sessão de agente. A sessão precisa estar em estado RUNNING para obter a stack.`);
+                }
+                const agentSessionId = matchedRequest.agent.sessionId;
+
+                const stacksUrl = `${getBaseUrl()}/agents/${pid}/sessions/${agentSessionId}/stacks`;
+                const stacksResponse = await fetch(stacksUrl, {
+                    method: 'GET',
+                    headers: { 'Authorization': getAuthHeader() }
+                });
+
+                if (!stacksResponse.ok) throw new Error(`Erro ao buscar Stacks: ${stacksResponse.status}`);
+
+                const traceData = await stacksResponse.json();
+                const jsonFormatted = JSON.stringify(traceData, null, 2);
+
+                const ablStacks = traceData.result?.ABLStacks?.[0] || {};
+                const callstackList = ablStacks.Callstack || [];
+                const databasesList = ablStacks.Databases || [];
+                const persProcsList = ablStacks.PersProcs || [];
+                const objectsList = ablStacks.OO4GLObjs || [];
+                const propath = ablStacks.Propath || '';
+                const status = ablStacks.Status || 'N/A';
+
+                let stackTableRows = '';
+                if (Array.isArray(callstackList) && callstackList.length > 0) {
+                    callstackList.forEach((item, index) => {
+                        const routine = item.Routine || '-';
+                        const source = item.Source || '-';
+                        const line = item.Line !== undefined ? item.Line : '-';
+                        stackTableRows += `
+                            <tr>
+                                <td style="text-align: center; width: 40px; font-weight: bold;">${index + 1}</td>
+                                <td style="color: #0056b3; font-weight: bold;">${routine}</td>
+                                <td>${source}</td>
+                                <td style="text-align: center; width: 80px; font-weight: bold; color: #d9534f;">${line}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    stackTableRows = '<tr><td colspan="4" style="text-align: center; color: #6c757d;">Nenhuma pilha de execução em andamento no momento.</td></tr>';
+                }
+
+                let dbTableRows = '';
+                if (Array.isArray(databasesList) && databasesList.length > 0) {
+                    databasesList.forEach(db => {
+                        dbTableRows += `
+                            <tr>
+                                <td style="font-weight: bold; color: #28a745;">${db.LDBNAME || '-'}</td>
+                                <td style="text-align: center;">${db.DBTYPE || '-'}</td>
+                                <td>${db.DBNAME || '-'}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    dbTableRows = '<tr><td colspan="3" style="text-align: center; color: #6c757d;">Nenhum banco de dados conectado.</td></tr>';
+                }
+
+                modalBody.innerHTML = `
+                    <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="font-size: 0.9em; font-weight: bold; color: #495057;">Estado da Sessão:</span>
+                            <span style="background-color: #d9534f; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold;">${status}</span>
+                        </div>
+                        <button class="btn-info" onclick="downloadTraceJson('${ablSessionID}', '${pid}', \`${encodeURIComponent(jsonFormatted)}\`)">💾 Baixar .json</button>
+                    </div>
+
+                    <div class="trace-card-grid">
+                        <div class="trace-card">
+                            <div class="trace-card-label">PID do Agente</div>
+                            <div class="trace-card-value">${pid}</div>
+                        </div>
+                        <div class="trace-card">
+                            <div class="trace-card-label">Agent Session ID</div>
+                            <div class="trace-card-value">${agentSessionId}</div>
+                        </div>
+                        <div class="trace-card">
+                            <div class="trace-card-label">Bancos Conectados</div>
+                            <div class="trace-card-value">${databasesList.length}</div>
+                        </div>
+                        <div class="trace-card">
+                            <div class="trace-card-label">Procedures Persistentes</div>
+                            <div class="trace-card-value">${persProcsList.length}</div>
+                        </div>
+                        <div class="trace-card">
+                            <div class="trace-card-label">Objetos OO4GL</div>
+                            <div class="trace-card-value">${objectsList.length}</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 15px;">
+                        <strong style="font-size: 0.85em; color: #495057; text-transform: uppercase;">Pilha de Chamadas (Callstack)</strong>
+                        <table class="stack-table">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: center;">#</th>
+                                    <th>Rotina / Função</th>
+                                    <th>Arquivo Fonte (.r / .p)</th>
+                                    <th style="text-align: center;">Linha</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${stackTableRows}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="margin-top: 15px;">
+                        <strong style="font-size: 0.85em; color: #495057; text-transform: uppercase;">Bancos Conectados (Databases)</strong>
+                        <table class="stack-table">
+                            <thead>
+                                <tr>
+                                    <th>Nome Lógico (LDBNAME)</th>
+                                    <th style="text-align: center;">Tipo</th>
+                                    <th>Caminho do Banco (DBNAME)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${dbTableRows}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    ${propath ? `
+                        <div style="margin-top: 15px;">
+                            <strong style="font-size: 0.85em; color: #495057; text-transform: uppercase;">Propath</strong>
+                            <div class="code-box" style="color: #66d9ef;">${propath.split(',').join('\n')}</div>
+                        </div>
+                    ` : ''}
+
+                    ${ablStacks.StartupParams ? `
+                        <div style="margin-top: 15px;">
+                            <strong style="font-size: 0.85em; color: #495057; text-transform: uppercase;">Parâmetros de Inicialização (Startup Params)</strong>
+                            <div class="code-box">${ablStacks.StartupParams}</div>
+                        </div>
+                    ` : ''}
+                `;
+
+            } catch (error) {
+                modalBody.innerHTML = `
+                    <div style="color: #d9534f; text-align: center; padding: 20px;">
+                        <strong>⚠️ Falha ao obter o Trace:</strong><br><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function downloadTraceJson(ablSessionID, pid, encodedJson) {
+            const jsonStr = decodeURIComponent(encodedJson);
+            const blob = new Blob([jsonStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `trace_session_${ablSessionID}_pid_${pid}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function closeModal() {
+            document.getElementById('traceModal').style.display = 'none';
+        }
+
+        async function terminateSession(sessionID, ablSessionID) {
+            if (!confirm(`Deseja realmente encerrar a sessão ABL ${ablSessionID}?`)) {
+                return;
+            }
+
+            const endpoint = `${getBaseUrl()}/sessions?sessionID=${encodeURIComponent(sessionID)}&terminateOpt=1`;
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': getAuthHeader() }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro ao encerrar: ${response.status} ${response.statusText}`);
+                }
+
+                alert(`Sessão ${ablSessionID} encerrada com sucesso!`);
+                loadSessions(false);
+
+            } catch (error) {
+                alert(`Falha ao encerrar a sessão: ${error.message}`);
+            }
+        }
+
+        window.onload = loadConfig;
     </script>
 </body>
 </html>
