@@ -182,6 +182,7 @@
 
         .RUNNING { color: #d9534f; font-weight: bold; }
         .READY { color: #5cb85c; font-weight: bold; }
+        .IDLE { color: #5cb85c; font-weight: bold; }
         .RESERVED { color: #f0ad4e; font-weight: bold; }
         .AVAILABLE { color: #0275d8; font-weight: bold; }
         .loading { text-align: center; color: #6c757d; font-style: italic; padding: 20px !important; }
@@ -228,7 +229,7 @@
             background: #ffffff;
             border-radius: 8px;
             width: 90%;
-            max-width: 900px;
+            max-width: 950px;
             max-height: 85vh;
             display: flex;
             flex-direction: column;
@@ -275,7 +276,7 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Estilos do Trace HTML Formatado */
+        /* Estilos de Cartões e Agentes */
         .trace-card-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -303,6 +304,24 @@
             font-weight: bold;
             margin-top: 2px;
             word-break: break-all;
+        }
+
+        .agent-block {
+            background: #ffffff;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .agent-block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e9ecef;
         }
 
         .stack-table {
@@ -340,7 +359,7 @@
             font-size: 0.78em;
             white-space: pre-wrap;
             word-break: break-all;
-            max-height: 350px;
+            max-height: 250px;
             overflow-y: auto;
             margin-top: 5px;
         }
@@ -390,8 +409,8 @@
             </div>
 
             <button class="btn" onclick="manualSearch()">🔄 Buscar Sessões</button>
-            <button class="btn-secondary" onclick="loadAgents()">🤖 Agentes</button>
-            <button class="btn-secondary" onclick="loadPropath()">📂 Propath</button>
+            <button class="btn-secondary" onclick="loadAgents()">🤖 Agente</button>
+            <button class="btn-secondary" onclick="loadConfiguration()">⚙️ Configuração</button>
         </div>
 
         <div class="header-info">
@@ -422,7 +441,7 @@
         </div>
     </div>
 
-    <!-- Modal Genérico para Exibição de Dados (Trace, Agentes e Propath) -->
+    <!-- Modal Genérico para Exibição de Dados -->
     <div id="traceModal" class="modal-overlay">
         <div class="modal-container">
             <div class="modal-header">
@@ -524,6 +543,14 @@
             return `http://${host}:${port}/oemanager/applications/${appName}`;
         }
 
+        function formatBytes(bytes) {
+            if (!bytes || bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
         async function loadSessions(isBackgroundRefresh = false) {
             const tbody = document.getElementById('sessionTableBody');
             
@@ -585,21 +612,23 @@
             }
         }
 
-        // Função do novo botão "Agentes"
+        // Novo Botão "Agente": Exibe Agentes e suas Sessões filhas (/agents/<PID>/sessions)
         async function loadAgents() {
             const modal = document.getElementById('traceModal');
             const modalBody = document.getElementById('modalBody');
-            document.getElementById('modalTitle').innerText = `Agentes PASOE - ${document.getElementById('appName').value}`;
+            const appName = document.getElementById('appName').value;
+            document.getElementById('modalTitle').innerText = `Agentes e Sessões - ${appName}`;
             
             modalBody.innerHTML = `
                 <div class="spinner-container">
                     <div class="spinner"></div>
-                    <div style="color: #6c757d; font-size: 0.9em;">Buscando agentes da instância...</div>
+                    <div style="color: #6c757d; font-size: 0.9em;">Carregando agentes e mapeando sessões ativas...</div>
                 </div>
             `;
             modal.style.display = 'flex';
 
             try {
+                // 1. Busca lista de Agentes
                 const response = await fetch(`${getBaseUrl()}/agents`, {
                     method: 'GET',
                     headers: { 'Authorization': getAuthHeader() }
@@ -610,97 +639,169 @@
                 const data = await response.json();
                 const agentsList = data.result?.agents || [];
 
-                let agentRows = '';
-                if (agentsList.length > 0) {
-                    agentsList.forEach((agent, index) => {
-                        agentRows += `
-                            <tr>
-                                <td style="text-align: center; font-weight: bold;">${index + 1}</td>
-                                <td><strong style="color: #0056b3;">${agent.agentId || '-'}</strong></td>
-                                <td style="font-weight: bold;">${agent.pid || '-'}</td>
-                                <td class="${agent.state}" style="font-weight: bold;">${agent.state || '-'}</td>
-                            </tr>
-                        `;
-                    });
-                } else {
-                    agentRows = '<tr><td colspan="4" style="text-align: center; color: #6c757d;">Nenhum agente localizado.</td></tr>';
+                if (agentsList.length === 0) {
+                    modalBody.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 20px;">Nenhum agente localizado para esta instância.</div>';
+                    return;
                 }
 
-                modalBody.innerHTML = `
-                    <div style="margin-bottom: 10px;">
-                        <small style="color: #6c757d;">Total de Agentes Ativos: <strong>${agentsList.length}</strong></small>
-                    </div>
-                    <table class="stack-table">
-                        <thead>
-                            <tr>
-                                <th style="text-align: center; width: 40px;">#</th>
-                                <th>Agent ID</th>
-                                <th>PID (Processo)</th>
-                                <th>Status (State)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${agentRows}
-                        </tbody>
-                    </table>
-                `;
+                let blocksHtml = '';
+
+                // 2. Para cada Agente, busca suas Sessões
+                for (const agent of agentsList) {
+                    const pid = agent.pid;
+                    let sessionsTableRows = '';
+                    let totalSessions = 0;
+
+                    if (pid) {
+                        try {
+                            const sessResp = await fetch(`${getBaseUrl()}/agents/${pid}/sessions`, {
+                                method: 'GET',
+                                headers: { 'Authorization': getAuthHeader() }
+                            });
+
+                            if (sessResp.ok) {
+                                const sessData = await sessResp.json();
+                                const agentSessions = sessData.result?.AgentSession || [];
+                                totalSessions = agentSessions.length;
+
+                                if (agentSessions.length > 0) {
+                                    agentSessions.forEach((s, idx) => {
+                                        const startTimeFormatted = s.StartTime ? new Date(s.StartTime).toLocaleString('pt-BR') : '-';
+                                        sessionsTableRows += `
+                                            <tr>
+                                                <td style="text-align: center; font-weight: bold;">${idx + 1}</td>
+                                                <td style="color: #0056b3; font-weight: bold;">${s.SessionId || '-'}</td>
+                                                <td class="${s.SessionState}" style="font-weight: bold;">${s.SessionState || '-'}</td>
+                                                <td>${formatBytes(s.SessionMemory)}</td>
+                                                <td>${startTimeFormatted}</td>
+                                            </tr>
+                                        `;
+                                    });
+                                } else {
+                                    sessionsTableRows = '<tr><td colspan="5" style="text-align: center; color: #6c757d;">Nenhuma sessão ativa vinculada a este agente.</td></tr>';
+                                }
+                            } else {
+                                sessionsTableRows = '<tr><td colspan="5" style="text-align: center; color: #d9534f;">Erro ao consultar sessões do agente.</td></tr>';
+                            }
+                        } catch (e) {
+                            sessionsTableRows = `<tr><td colspan="5" style="text-align: center; color: #d9534f;">Falha: ${e.message}</td></tr>`;
+                        }
+                    }
+
+                    blocksHtml += `
+                        <div class="agent-block">
+                            <div class="agent-block-header">
+                                <div>
+                                    <strong style="color: #0056b3; font-size: 1.05em;">Agente PID: ${agent.pid || 'N/A'}</strong>
+                                    <span style="font-size: 0.8em; color: #6c757d; margin-left: 10px;">ID: ${agent.agentId || 'N/A'}</span>
+                                </div>
+                                <div>
+                                    <span style="font-size: 0.85em; font-weight: bold; margin-right: 10px;">Sessões: ${totalSessions}</span>
+                                    <span class="${agent.state}" style="font-weight: bold; font-size: 0.85em;">${agent.state || 'UNKNOWN'}</span>
+                                </div>
+                            </div>
+                            
+                            <table class="stack-table">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align: center; width: 40px;">#</th>
+                                        <th>Session ID</th>
+                                        <th>Estado (Status)</th>
+                                        <th>Memória</th>
+                                        <th>Horário Início</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${sessionsTableRows}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+
+                modalBody.innerHTML = blocksHtml;
 
             } catch (error) {
                 modalBody.innerHTML = `
                     <div style="color: #d9534f; text-align: center; padding: 20px;">
-                        <strong>⚠️ Falha ao buscar Agentes:</strong><br><br>
+                        <strong>⚠️ Falha ao buscar Agentes e Sessões:</strong><br><br>
                         ${error.message}
                     </div>
                 `;
             }
         }
 
-        // Função do novo botão "Propath"
-        async function loadPropath() {
+        // Novo Botão "Configuração": Exibe propriedades filtradas + PROPATH
+        async function loadConfiguration() {
             const modal = document.getElementById('traceModal');
             const modalBody = document.getElementById('modalBody');
             const appName = document.getElementById('appName').value;
-            document.getElementById('modalTitle').innerText = `Propath do Agente - ${appName}`;
+            document.getElementById('modalTitle').innerText = `Configurações da Instância - ${appName}`;
             
             modalBody.innerHTML = `
                 <div class="spinner-container">
                     <div class="spinner"></div>
-                    <div style="color: #6c757d; font-size: 0.9em;">Carregando propriedades do agente...</div>
+                    <div style="color: #6c757d; font-size: 0.9em;">Carregando propriedades do Broker e Propath...</div>
                 </div>
             `;
             modal.style.display = 'flex';
 
             try {
-                const response = await fetch(`${getBaseUrl()}/agents/properties`, {
+                // 1. Busca propriedades gerais em /properties
+                const brokerPropsResp = await fetch(`${getBaseUrl()}/properties`, {
                     method: 'GET',
                     headers: { 'Authorization': getAuthHeader() }
                 });
 
-                if (!response.ok) throw new Error(`Erro ao buscar /agents/properties: ${response.status}`);
+                if (!brokerPropsResp.ok) throw new Error(`Erro ao buscar /properties: ${brokerPropsResp.status}`);
+                const brokerData = await brokerPropsResp.json();
+                const bProps = brokerData.result || {};
 
-                const data = await response.json();
-                const properties = data.result || {};
-                const propathRaw = properties.PROPATH || '';
+                // 2. Busca o PROPATH em /agents/properties
+                const agentPropsResp = await fetch(`${getBaseUrl()}/agents/properties`, {
+                    method: 'GET',
+                    headers: { 'Authorization': getAuthHeader() }
+                });
 
-                if (!propathRaw) {
-                    modalBody.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 20px;">Nenhum PROPATH encontrado nas propriedades.</div>';
-                    return;
+                let propathFormatted = 'Não informado';
+                if (agentPropsResp.ok) {
+                    const agentData = await agentPropsResp.json();
+                    const propathRaw = agentData.result?.PROPATH || '';
+                    if (propathRaw) {
+                        propathFormatted = propathRaw.split(',').join('\n');
+                    }
                 }
 
-                // Trata caminhos separados por vírgula (Windows/Linux)
-                const propathFormatted = propathRaw.split(',').join('\n');
-
                 modalBody.innerHTML = `
-                    <div style="margin-bottom: 10px;">
-                        <small style="color: #6c757d;">Diretórios e bibliotecas .pl mapeadas no PROPATH do Agente:</small>
+                    <div class="trace-card-grid">
+                        <div class="trace-card">
+                            <div class="trace-card-label">Máximo de Agentes (maxAgents)</div>
+                            <div class="trace-card-value">${bProps.maxAgents || '-'}</div>
+                        </div>
+                        <div class="trace-card">
+                            <div class="trace-card-label">Sessões ABL por Agente</div>
+                            <div class="trace-card-value">${bProps.maxABLSessionsPerAgent || '-'}</div>
+                        </div>
+                        <div class="trace-card">
+                            <div class="trace-card-label">Nível de Log (LoggingLevel)</div>
+                            <div class="trace-card-value">${bProps.agentLoggingLevel || '-'}</div>
+                        </div>
+                        <div class="trace-card">
+                            <div class="trace-card-label">Tipos de Entrada de Log</div>
+                            <div class="trace-card-value" style="font-size: 0.85em;">${bProps.agentLogEntryTypes || '-'}</div>
+                        </div>
                     </div>
-                    <div class="code-box" style="color: #66d9ef; max-height: 450px;">${propathFormatted}</div>
+
+                    <div style="margin-top: 20px;">
+                        <strong style="font-size: 0.85em; color: #495057; text-transform: uppercase;">Mapeamento do PROPATH</strong>
+                        <div class="code-box" style="color: #66d9ef; max-height: 380px;">${propathFormatted}</div>
+                    </div>
                 `;
 
             } catch (error) {
                 modalBody.innerHTML = `
                     <div style="color: #d9534f; text-align: center; padding: 20px;">
-                        <strong>⚠️ Falha ao buscar Propath:</strong><br><br>
+                        <strong>⚠️ Falha ao buscar Configurações:</strong><br><br>
                         ${error.message}
                     </div>
                 `;
