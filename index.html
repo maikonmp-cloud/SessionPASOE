@@ -292,7 +292,7 @@
             font-size: 0.78em;
             white-space: pre-wrap;
             word-break: break-all;
-            max-height: 120px;
+            max-height: 140px;
             overflow-y: auto;
             margin-top: 5px;
         }
@@ -584,14 +584,16 @@
                 const traceData = await stacksResponse.json();
                 const jsonFormatted = JSON.stringify(traceData, null, 2);
 
-                // Parser da estrutura ABLStacks do PASOE
+                // Parser completo da estrutura ABLStacks
                 const ablStacks = traceData.result?.ABLStacks?.[0] || {};
                 const callstackList = ablStacks.Callstack || [];
                 const databasesList = ablStacks.Databases || [];
                 const persProcsList = ablStacks.PersProcs || [];
                 const objectsList = ablStacks.OO4GLObjs || [];
+                const propath = ablStacks.Propath || '';
                 const status = ablStacks.Status || 'N/A';
 
+                // Tabela de Callstack
                 let stackTableRows = '';
                 if (Array.isArray(callstackList) && callstackList.length > 0) {
                     callstackList.forEach((item, index) => {
@@ -609,6 +611,22 @@
                     });
                 } else {
                     stackTableRows = '<tr><td colspan="4" style="text-align: center; color: #6c757d;">Nenhuma pilha de execução em andamento no momento.</td></tr>';
+                }
+
+                // Tabela de Databases Conectados
+                let dbTableRows = '';
+                if (Array.isArray(databasesList) && databasesList.length > 0) {
+                    databasesList.forEach(db => {
+                        dbTableRows += `
+                            <tr>
+                                <td style="font-weight: bold; color: #28a745;">${db.LDBNAME || '-'}</td>
+                                <td style="text-align: center;">${db.DBTYPE || '-'}</td>
+                                <td>${db.DBNAME || '-'}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    dbTableRows = '<tr><td colspan="3" style="text-align: center; color: #6c757d;">Nenhum banco de dados conectado.</td></tr>';
                 }
 
                 modalBody.innerHTML = `
@@ -659,6 +677,29 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <div style="margin-top: 15px;">
+                        <strong style="font-size: 0.85em; color: #495057; text-transform: uppercase;">Bancos Conectados (Databases)</strong>
+                        <table class="stack-table">
+                            <thead>
+                                <tr>
+                                    <th>Nome Lógico (LDBNAME)</th>
+                                    <th style="text-align: center;">Tipo</th>
+                                    <th>Caminho do Banco (DBNAME)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${dbTableRows}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    ${propath ? `
+                        <div style="margin-top: 15px;">
+                            <strong style="font-size: 0.85em; color: #495057; text-transform: uppercase;">Propath</strong>
+                            <div class="code-box" style="color: #66d9ef;">${propath.split(',').join('\n')}</div>
+                        </div>
+                    ` : ''}
 
                     ${ablStacks.StartupParams ? `
                         <div style="margin-top: 15px;">
