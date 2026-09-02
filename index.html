@@ -159,7 +159,6 @@
         .AVAILABLE { color: #0275d8; font-weight: bold; }
         .loading { text-align: center; color: #6c757d; font-style: italic; padding: 20px !important; }
 
-        /* Breakpoint para telas menores e notebooks */
         @media (max-width: 992px) {
             body { margin: 15px; }
             .form-group-large { flex: 1 1 100%; }
@@ -231,7 +230,7 @@
         /* Estilos do Trace HTML Formatado */
         .trace-card-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 10px;
             margin-bottom: 15px;
         }
@@ -261,7 +260,7 @@
         .stack-table {
             width: 100%;
             border: 1px solid #dee2e6;
-            margin-top: 10px;
+            margin-top: 8px;
             border-radius: 4px;
             overflow: hidden;
         }
@@ -282,6 +281,20 @@
 
         .stack-table tr:nth-child(even) {
             background-color: #f8f9fa;
+        }
+
+        .code-box {
+            background: #272822;
+            color: #a6e22e;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.78em;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 120px;
+            overflow-y: auto;
+            margin-top: 5px;
         }
     </style>
 </head>
@@ -571,30 +584,39 @@
                 const traceData = await stacksResponse.json();
                 const jsonFormatted = JSON.stringify(traceData, null, 2);
 
-                // Formatação em HTML limpo da Stack
-                const stackResult = traceData.result || {};
-                const stackList = stackResult.stack || stackResult.Stack || [];
+                // Parser da estrutura ABLStacks do PASOE
+                const ablStacks = traceData.result?.ABLStacks?.[0] || {};
+                const callstackList = ablStacks.Callstack || [];
+                const databasesList = ablStacks.Databases || [];
+                const persProcsList = ablStacks.PersProcs || [];
+                const objectsList = ablStacks.OO4GLObjs || [];
+                const status = ablStacks.Status || 'N/A';
 
                 let stackTableRows = '';
-                if (Array.isArray(stackList) && stackList.length > 0) {
-                    stackList.forEach((item, index) => {
-                        const procName = typeof item === 'string' ? item : (item.moduleName || item.procedureName || item.procName || JSON.stringify(item));
-                        const lineNo = item.lineNumber || item.lineNo || '-';
+                if (Array.isArray(callstackList) && callstackList.length > 0) {
+                    callstackList.forEach((item, index) => {
+                        const routine = item.Routine || '-';
+                        const source = item.Source || '-';
+                        const line = item.Line !== undefined ? item.Line : '-';
                         stackTableRows += `
                             <tr>
-                                <td style="text-align: center; width: 50px;">${index + 1}</td>
-                                <td>${procName}</td>
-                                <td style="text-align: center; width: 100px;">${lineNo}</td>
+                                <td style="text-align: center; width: 40px; font-weight: bold;">${index + 1}</td>
+                                <td style="color: #0056b3; font-weight: bold;">${routine}</td>
+                                <td>${source}</td>
+                                <td style="text-align: center; width: 80px; font-weight: bold; color: #d9534f;">${line}</td>
                             </tr>
                         `;
                     });
                 } else {
-                    stackTableRows = '<tr><td colspan="3" style="text-align: center; color: #6c757d;">Nenhuma pilha de execução encontrada na resposta.</td></tr>';
+                    stackTableRows = '<tr><td colspan="4" style="text-align: center; color: #6c757d;">Nenhuma pilha de execução em andamento no momento.</td></tr>';
                 }
 
                 modalBody.innerHTML = `
                     <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
-                        <h4 style="margin: 0; color: #495057;">Detalhamento da Execução</h4>
+                        <div>
+                            <span style="font-size: 0.9em; font-weight: bold; color: #495057;">Estado da Sessão:</span>
+                            <span style="background-color: #d9534f; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold;">${status}</span>
+                        </div>
                         <button class="btn-info" onclick="downloadTraceJson('${ablSessionID}', '${pid}', \`${encodeURIComponent(jsonFormatted)}\`)">💾 Baixar .json</button>
                     </div>
 
@@ -604,22 +626,31 @@
                             <div class="trace-card-value">${pid}</div>
                         </div>
                         <div class="trace-card">
-                            <div class="trace-card-label">Session ID Agente</div>
+                            <div class="trace-card-label">Agent Session ID</div>
                             <div class="trace-card-value">${agentSessionId}</div>
                         </div>
                         <div class="trace-card">
-                            <div class="trace-card-label">Sessão ABL</div>
-                            <div class="trace-card-value">${ablSessionID}</div>
+                            <div class="trace-card-label">Bancos Conectados</div>
+                            <div class="trace-card-value">${databasesList.length}</div>
+                        </div>
+                        <div class="trace-card">
+                            <div class="trace-card-label">Procedures Persistentes</div>
+                            <div class="trace-card-value">${persProcsList.length}</div>
+                        </div>
+                        <div class="trace-card">
+                            <div class="trace-card-label">Objetos OO4GL</div>
+                            <div class="trace-card-value">${objectsList.length}</div>
                         </div>
                     </div>
 
                     <div style="margin-top: 15px;">
-                        <strong style="font-size: 0.85em; color: #495057; text-transform: uppercase;">Pilha de Chamadas (Stack Call)</strong>
+                        <strong style="font-size: 0.85em; color: #495057; text-transform: uppercase;">Pilha de Chamadas (Callstack)</strong>
                         <table class="stack-table">
                             <thead>
                                 <tr>
                                     <th style="text-align: center;">#</th>
-                                    <th>Programa / Procedure</th>
+                                    <th>Rotina / Função</th>
+                                    <th>Arquivo Fonte (.r / .p)</th>
                                     <th style="text-align: center;">Linha</th>
                                 </tr>
                             </thead>
@@ -628,6 +659,13 @@
                             </tbody>
                         </table>
                     </div>
+
+                    ${ablStacks.StartupParams ? `
+                        <div style="margin-top: 15px;">
+                            <strong style="font-size: 0.85em; color: #495057; text-transform: uppercase;">Parâmetros de Inicialização (Startup Params)</strong>
+                            <div class="code-box">${ablStacks.StartupParams}</div>
+                        </div>
+                    ` : ''}
                 `;
 
             } catch (error) {
