@@ -34,5 +34,14 @@
     "appName": "rpw_cjduv5-VGS_p",
     "user": "totvs",
     "pass": "totvs"
+  },
+  {
+    "name": "dts_clu70n_p",
+	"type": "produção",
+    "host": "10.0.2.2",
+    "port": "9080",
+    "appName": "dts_clu70n_p",
+    "user": "tomcat",
+    "pass": "tomcat"
   }
 ]
